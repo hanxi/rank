@@ -1,0 +1,6 @@
+[submodule "wlua"]
+	path = wlua
+	url = git@github.com:hanxi/wlua.git
+[submodule "3rd/lua-zset"]
+	path = 3rd/lua-zset
+	url = git@github.com:xjdrew/lua-zset.git

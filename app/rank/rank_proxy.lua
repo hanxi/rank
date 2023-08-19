@@ -1,4 +1,3 @@
-local wlua = require "wlua"
 local log = require "log"
 local skynet = require "skynet"
 local errcode = require "app.errcode"
@@ -42,7 +41,7 @@ function M.get(appname)
 		appname = appname,
 		tag2service = {}
     }
-    log.debug("new proxy:", appname, ", service:", service)
+    log.debug("new proxy:", appname)
     local proxy = setmetatable(instance, mt)
 	proxys_cache[appname] = proxy
 	return proxy
