@@ -6,6 +6,7 @@ return function()
 	local db = require "app.db"
 	local util_table = require "util.table"
 	local rankidlib = require "app.rank.rankid"
+	local errcode = require "app.errcode"
 
 	local CMD = {}
 
@@ -46,12 +47,14 @@ return function()
 		local ok, err, ret = dbtbl:safe_batch_update(updates)
 		if (not ok) or (not ret) or (ret.n ~= #updates) then
 			log.error("set_config save failed. appname:", appname, ", config:", util_table.tostring(config), ", err:", err)
+			return errcode.SAVE_DB_FAIL
 		end
 
 		-- 通知所有 rank_service 清空缓存
 		for _, addr in pairs(ranks) do
 			skynet.send(addr, "lua", "clear_config_cache")
 		end
+		return errcode.OK
 	end
 
 	skynet.dispatch("lua", function(_, source, cmd, ...)
