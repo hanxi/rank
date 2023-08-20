@@ -116,11 +116,11 @@ return function(rankid)
 
 	-- TODO: 定时清理长期不用的排行榜
 	skynet.dispatch("lua", function(_, source, cmd, ...)
-        local f = CMD[cmd]
-        if f then
-            skynet.ret(skynet.pack(f(...)))
-        else
-            log.error(string.format("Unknown cmd:%s, source:%s", cmd, source))
-        end
-    end)
+		local f = CMD[cmd]
+		if f then
+			skynet.ret(skynet.pack(f(...)))
+		else
+			log.error(string.format("Unknown cmd:%s, source:%s", cmd, source))
+		end
+	end)
 end

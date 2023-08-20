@@ -58,11 +58,11 @@ return function()
 	end
 
 	skynet.dispatch("lua", function(_, source, cmd, ...)
-        local f = CMD[cmd]
-        if f then
-            skynet.ret(skynet.pack(f(...)))
-        else
-            log.error(string.format("Unknown cmd:%s, source:%s", cmd, source))
-        end
-    end)
+		local f = CMD[cmd]
+		if f then
+			skynet.ret(skynet.pack(f(...)))
+		else
+			log.error(string.format("Unknown cmd:%s, source:%s", cmd, source))
+		end
+	end)
 end

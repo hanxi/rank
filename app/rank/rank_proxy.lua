@@ -40,9 +40,9 @@ function M.get(appname)
 	local instance = {
 		appname = appname,
 		tag2service = {}
-    }
-    log.debug("new proxy:", appname)
-    local proxy = setmetatable(instance, mt)
+	}
+	log.debug("new proxy:", appname)
+	local proxy = setmetatable(instance, mt)
 	proxys_cache[appname] = proxy
 	return proxy
 end

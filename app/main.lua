@@ -8,7 +8,7 @@ local app = wlua:default()
 
 app:get("/", function (c)
 	log.info(package.cpath)
-    c:send("Hello wlua rank!")
+	c:send("Hello wlua rank!")
 end)
 
 app:get("/ping", function (c)
