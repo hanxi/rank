@@ -68,13 +68,18 @@ function mt:limit(count)
 	local from = count + 1
 	local to = total
 
+	local delete_ids = {}
     local delete_function = function(uid)
         self.tbl[uid] = nil
-		-- 从数据库中删除
-		self:_db_delete(uid)
+		delete_ids[uid] = true
     end
 
-    return self.sl:delete_by_rank(from, to, delete_function)
+	local ret = self.sl:delete_by_rank(from, to, delete_function)
+	for uid, _ in pairs(delete_ids) do
+		-- 从数据库中删除
+		self:_db_delete(uid)
+	end
+	return ret
 end
 
 function mt:_reverse_rank(r)
@@ -90,13 +95,18 @@ function mt:rev_limit(count)
     local from = self:_reverse_rank(count + 1)
     local to   = self:_reverse_rank(total)
 
+	local delete_ids = {}
     local delete_function = function(uid)
         self.tbl[uid] = nil
-		-- 从数据库中删除
-		self:_db_delete(uid)
+		delete_ids[uid] = true
     end
 
-    return self.sl:delete_by_rank(from, to, delete_function)
+    local ret = self.sl:delete_by_rank(from, to, delete_function)
+	for uid, _ in pairs(delete_ids) do
+		-- 从数据库中删除
+		self:_db_delete(uid)
+	end
+	return ret
 end
 
 function mt:rank(uid)
