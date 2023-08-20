@@ -1,8 +1,11 @@
 local skiplist = require "skiplist.c"
+local util_table = require "util.table"
+local log = require "log"
+
 local mt = {}
 mt.__index = mt
 
-function mt:add(uid, score, info)
+function mt:_add(uid, score, info)
     local element = self.tbl[uid]
     if element then
         if element.score == score then
@@ -17,7 +20,26 @@ function mt:add(uid, score, info)
 		score = score,
 		info = info,
 	}
-	-- TODO: 更新数据库数据
+end
+
+function mt:add(uid, score, info)
+	self:_add(uid, score, info)
+	self:_db_update(uid, score, info)
+end
+
+function mt:_db_update(uid, score, info)
+	-- 更新数据库数据
+	local data = {
+		["$set"] = {
+			score = score,
+			info = info,
+		}
+	}
+	local ok, err, ret = self.dbtbl:safe_update({uid = uid}, data, true, false)
+	if (not ok) or (not ret) or (ret.n ~= 1) then
+		log.error("save rank failed. uid:", uid, ", score:",
+			score, ", info:", util_table.tostring(info), ", err:", err)
+	end
 end
 
 function mt:rem(uid)
@@ -25,8 +47,16 @@ function mt:rem(uid)
     if element then
         self.sl:delete(element.score, uid)
         self.tbl[uid] = nil
-		-- TODO: 从数据库中删除
+		-- 从数据库中删除
+		self:_db_delete(uid)
     end
+end
+
+function mt:_db_delete(uid)
+	local ok, err, ret = self.dbtbl:safe_delete({uid= uid}, true)
+	if (not ok) or (not ret) or (ret.n ~= 1) then
+		log.error("delete from rank failed. uid:", uid, ", err:", err)
+	end
 end
 
 function mt:limit(count)
@@ -40,7 +70,8 @@ function mt:limit(count)
 
     local delete_function = function(uid)
         self.tbl[uid] = nil
-		-- TODO: 从数据库中删除
+		-- 从数据库中删除
+		self:_db_delete(uid)
     end
 
     return self.sl:delete_by_rank(from, to, delete_function)
@@ -61,7 +92,8 @@ function mt:rev_limit(count)
 
     local delete_function = function(uid)
         self.tbl[uid] = nil
-		-- TODO: 从数据库中删除
+		-- 从数据库中删除
+		self:_db_delete(uid)
     end
 
     return self.sl:delete_by_rank(from, to, delete_function)
@@ -108,13 +140,35 @@ function mt:dump()
     self.sl:dump()
 end
 
+function mt:_load_db()
+	local ret = self.dbtbl:find({}, { _id = 0 })
+    while ret:hasNext() do
+        local data = ret:next()
+		self:_add(data.uid, data.score, data.info)
+    end
+end
+
 local M = {}
 
-function M.new(db_conf, rankid)
+local mongo = require "skynet.db.mongo"
+
+local function new_dbtbl(db_conf, dbname, tblname)
+	log.debug("new_dbtbl:", db_conf, dbname, tblname)
+	local db_conn = mongo.client(db_conf)
+	local dbtbl = db_conn[dbname][tblname]
+	dbtbl:createIndex({{ uid = 1 }, unique = true})
+	log.debug("new_dbtbl ok")
+	return dbtbl
+end
+
+function M.new(db_conf, dbname, tblname)
     local obj = {}
     obj.sl = skiplist()
     obj.tbl = {}
-    return setmetatable(obj, mt)
+	obj.dbtbl = new_dbtbl(db_conf, dbname, tblname)
+    setmetatable(obj, mt)
+	obj:_load_db()
+	return obj
 end
 
 return M

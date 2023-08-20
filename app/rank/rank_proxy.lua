@@ -48,7 +48,7 @@ function M.get(appname)
 end
 
 function M:set_config(config)
-	return timeout_call(rankmgr.addr, "lua", "set_config", config)
+	return timeout_call(rankmgr.addr, "lua", "set_config", self.appname, config)
 end
 
 function M:cache_services(tags)

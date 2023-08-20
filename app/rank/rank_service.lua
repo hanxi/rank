@@ -5,6 +5,7 @@ return function(rankid)
 	local const = require "app.const"
 	local ranklib = require "rank"
 	local config = require "config"
+	local db = require "app.db"
 
 	log.info("init rank:", rankid)
 
@@ -12,7 +13,16 @@ return function(rankid)
 	local config_cache
 
 	local function load_config()
-		-- TODO: 从数据库加载数据
+		local dbtbl = db.get_config_dbtbl()
+		-- 从数据库加载配置
+		local data = dbtbl:findOne({ rankid = rankid }, { _id = 0, cfg = 1, })
+		log.debug("load_config data:", data)
+		if data then
+			return {
+				capacity = data.cfg.capacity,
+				order = data.cfg.order,
+			}
+		end
 		return {
 			capacity = const.DEFAULT_CAPACITY,
 			order = const.ASCENDING,
@@ -28,8 +38,9 @@ return function(rankid)
 		return config_cache
 	end
 
-	local db_conf = config.get("app_mongodb_conf")
-	local rankobj = ranklib.new(db_conf, rankid)
+	local db_conf = config.get_tbl("app_mongodb_conf")
+	log.debug("db_conf:", db_conf)
+	local rankobj = ranklib.new(db_conf, const.DB_NAME, rankid)
 
 	function CMD.update(uid, score, info)
 		rankobj:add(uid, score, info)
@@ -100,8 +111,10 @@ return function(rankid)
 
 	function CMD.clear_config_cache()
 		config_cache = nil
+		log.info("clear_config_cache ok")
 	end
 
+	-- TODO: 定时清理长期不用的排行榜
 	skynet.dispatch("lua", function(_, source, cmd, ...)
         local f = CMD[cmd]
         if f then
