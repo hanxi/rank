@@ -27,7 +27,7 @@
 
 ## 详细文档
 
-TODO：
+[apidoc.pdf](/apidoc.pdf)
 
 ## QQ 群
 
